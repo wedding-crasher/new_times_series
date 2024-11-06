@@ -20,15 +20,10 @@ class EncoderLayer(nn.Module):
         new_x, attn = self.attention(
             x,x,x,
             attn_mask = attn_mask
-            tau = 
+            tau =tau, delta 
         )
         
         
-        
-        
-        
-
-
 class Encoder(nn.Module) :
 
     def __init__(self, attn_layers, conv_layers=None, norm_layer= None):
