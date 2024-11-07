@@ -10,7 +10,15 @@ class Model(nn.Module):
     
     # torch 모든 Layer들은 nn.Module 상속
     def __init__(self, configs):
-        super(Model, self).__init__()
+        super(Model, self).__init__()ncoderLayer(
+                            AttentionLayer(
+                                FullAttention(False, configs.factor, attention_dropout=configs.dropout,
+                                              output_attention=configs.output_attention), configs.d_model, configs.n_heads),
+                            configs.d_model,
+                            configs.d_ff,
+                            dropout=configs.dropout,
+                            activation=configs.activation
+                        ) for l in range(configs.e_layers)
         # Module의 생성자 상속으로 실행
         self.seq_len = configs.seq_len
         self.pred_len = configs.pred_len
