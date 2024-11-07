@@ -2,7 +2,8 @@ import torch
 import torch.nn as nn
 import torch.functional as F 
 from math import sqrt 
-from utils.masking import TriangularCasu
+from utils.masking import TriangularCausalMask
+import numpy as np
 
 
 class FullAttention(nn.Module):
@@ -14,14 +15,35 @@ class FullAttention(nn.Module):
         self.dropout = nn.Dropout(attention_dropout)
         
     def forward(self, queries, keys, values, attn_mask, tau=None, delta=None):
+        # B: 배치사이즈, L 시퀀스 길이(토큰개수), H 헤드 수, E 쿼리의 임베딩 차원(각 토큰의 차원)
         B, L, H, E = queries.shape
         _, S, _, D = values.shape
+        # 스케일은 어텐션 스코어가 너무 크거나 작아지는 것을 방지해, 소프트맥스 계산시 더 안정적인 확률분포를 만듬 
         scale = self.scale or 1. / sqrt(E)
+        
+        #아인슈타인 표기법으로 텐서간 연산, 입력차원 -> 출력차원
+        # ex) [B,3,1,4] [B,3,1,4] -> [B,1,3,3]
         scores = torch.einsum("blhe,bshe->bhls", queries, keys)
         
         if self.mask_flag:
             if attn_mask is None:
-                attn_mask = Trian
+                attn_mask = TriangularCausalMask(B,L,device = queries.device)
+            
+            # mask가 true인 위치에 -np.inf 채워 넣겠다. 
+            scores.masked_fill_(attn_mask.mask, -np.inf)
+         
+        #:[B,H,L,S] dropout 적용해 어텐션 가중치를 무작위로 제거해 과적합 방지 -> 일부값 0으로 설정, 학습시마다 일부 연결 끊어주는 효과 
+        A = self.dropout(torch.softmax(scale * scores, dim= -1))
+        
+        #A와 values 곱해 최종 attention출력 만들기 
+        V = torch.einsum("bhls,bshd->blhd", A, values)
+        
+        # Attention map(attention weight) 반환 옵션 
+        if self.output_attention:
+            return (V.contiguous(),A)
+        else:
+            return (V.contiguous(), None)
+    
         
 
 class AttentionLayer(nn.Module):
