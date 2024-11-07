@@ -1,7 +1,32 @@
+import torch 
+import torch.nn as nn
+import torch.functional as F 
+from math import sqrt 
+from utils.masking import TriangularCasu
+
+
+class FullAttention(nn.Module):
+    def __init__(self, mask_flag = True, factor = 5, scale = None, attention_dropout = 0.1, output_attention=False):
+        super(FullAttention, self).__init__()
+        self.scale = scale
+        self.mask_flag = mask_flag
+        self.output_attention = output_attention
+        self.dropout = nn.Dropout(attention_dropout)
+        
+    def forward(self, queries, keys, values, attn_mask, tau=None, delta=None):
+        B, L, H, E = queries.shape
+        _, S, _, D = values.shape
+        scale = self.scale or 1. / sqrt(E)
+        scores = torch.einsum("blhe,bshe->bhls", queries, keys)
+        
+        if self.mask_flag:
+            if attn_mask is None:
+                attn_mask = Trian
+        
+
 class AttentionLayer(nn.Module):
     def __init__(self, attention, d_model, n_heads, d_keys = None, d_values = None):
-        super(AttentionLayer,self).__init__():
-
+        super(AttentionLayer,self).__init__()
         # Multi-head Attention이기에 d_model // n_heads로 각 해드별 차원 분할 -> 헤드는 특정정보에 집중
         # 나중에 짜피 CONCAT
         d_keys = d_keys or (d_model // n_heads)
@@ -29,7 +54,7 @@ class AttentionLayer(nn.Module):
         # VIEW -> 차원 모양 변경시 사용 : -1 넣을 경우 나머지 차원 자동 계산
         queries = self.query_projection(queries).view(B,L,H,-1)
         keys = self.key_projeciton(keys).view(B,S,H,-1)
-        values = self.value_projection(B,S,H, -1)
+        values = self.value_projection(values).view(B,S,H,-1)
 
         #실제 attention 계산 
         out, attn = self.inner_attention(
@@ -43,4 +68,7 @@ class AttentionLayer(nn.Module):
         out = out.view(B,L,-1)
 
         return self.out_projection(out), attn
+
+
+
 

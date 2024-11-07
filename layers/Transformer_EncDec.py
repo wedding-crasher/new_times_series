@@ -27,7 +27,7 @@ class EncoderLayer(nn.Module):
         new_x, attn = self.attention(
             x,x,x, #self attention applied to variate toekns
             attn_mask = attn_mask, #Optional attention mask
-            tau =tau, delta  #Additional Parameters in attetnion
+            tau =tau, delta = delta  #Additional Parameters in attetnion
         )
         x = x + self.dropout(new_x) # Residual Connection + dropout -> 앞에 aTTENTION Layer 출력에  Dropout적용 
         y = x = self.norm1(x) # Normalization 적용
