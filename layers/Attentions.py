@@ -29,7 +29,7 @@ class FullAttention(nn.Module):
             if attn_mask is None:
                 attn_mask = TriangularCausalMask(B,L,device = queries.device)
             
-            # mask가 true인 위치에 -np.inf 채워 넣겠다. 
+            # mask가 true인 위치에 -np.inf 채워 넣도록 짰음 
             scores.masked_fill_(attn_mask.mask, -np.inf)
          
         #:[B,H,L,S] dropout 적용해 어텐션 가중치를 무작위로 제거해 과적합 방지 -> 일부값 0으로 설정, 학습시마다 일부 연결 끊어주는 효과 
